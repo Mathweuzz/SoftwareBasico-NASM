@@ -28,8 +28,8 @@ section .data
     msg2_len equ $ - msg2
 
     ; Valores inteiros calculados em tempo de montagem
-    %assign TOTAL_MSGS 2
-    %assign TOTAL_LEN (msg1_len + msg2_len)
+    %assign TOTAL_MSGS 2           ; literal, ok para o pré-processador
+    TOTAL_LEN equ msg1_len + msg2_len  ; depende de labels -> usa equ
 
     ; -----------------------------------------------------------------------
     ; Exemplo de %if: só define msg_multi se TOTAL_MSGS > 1
