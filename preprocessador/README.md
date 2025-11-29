@@ -161,3 +161,18 @@ Nos próximos passos, o programa será estendido para incluir:
 
 * Condicionais de pré-processamento (`%if`, `%ifdef`, …).
 * Geração explícita de código pré-processado (`.pre`) e listagens (`.lst`) usando os comandos do NASM.
+
+### Passo 5 – Condicionais de pré-processador no NASM
+
+Objetivo:
+
+* Adicionar exemplos de uso de diretivas condicionais do pré-processador:
+
+  * `%if` / `%endif` com expressões numéricas (usando TOTAL_MSGS).
+  * `%ifdef` / `%endif` controladas por um símbolo (`DEBUG`) passado na linha de comando.
+* Manter o programa funcional, imprimindo duas mensagens principais e, opcionalmente, mensagens adicionais de diagnóstico em modo DEBUG.
+
+Resumo das ideias:
+
+* Usar `%if TOTAL_MSGS > 1` para definir uma mensagem extra apenas quando houver mais de uma mensagem configurada.
+* Usar `%ifdef DEBUG` para incluir uma mensagem de depuração que só aparece quando o programa é montado com `nasm -DDEBUG ...`.
