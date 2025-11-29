@@ -1,22 +1,32 @@
-; macros_linha.asm - uso de equ, %define, %assign e condicionais (%if, %ifdef)
+; macros_linha.asm
+; ---------------------------------------------------------------------------
+; Exemplo de uso do pré-processador do NASM:
+;   - equ       : cálculo de tamanhos e expressões ligadas a labels
+;   - %define   : constantes simbólicas para syscalls e descritores
+;   - %assign   : valores inteiros puros de pré-processamento
+;   - %if       : condicionais baseadas em valores numéricos
+;   - %ifdef    : inclusão condicional de código (ex.: DEBUG)
 ;
-; Versão do Passo 5:
-;   - Usa:
-;       - equ       : tamanhos de mensagens
-;       - %define   : constantes simbólicas (syscalls, descritores)
-;       - %assign   : valores inteiros no pré-processador
-;       - %if       : condição baseada em TOTAL_MSGS
-;       - %ifdef    : habilitar código extra em modo DEBUG
+; O programa:
+;   1) Imprime duas mensagens principais.
+;   2) Opcionalmente imprime uma mensagem extra se TOTAL_MSGS > 1.
+;   3) Opcionalmente imprime uma mensagem de depuração se DEBUG estiver definido.
+;   4) Encerra com exit(0).
+; ---------------------------------------------------------------------------
 
 ; ---------------------------------------------------------------------------
 ; Definições simbólicas (pré-processador)
 ; ---------------------------------------------------------------------------
 
-%define SYS_WRITE  1       ; número da syscall write
-%define SYS_EXIT   60      ; número da syscall exit
-%define STDOUT     1       ; descritor de arquivo para saída padrão (stdout)
+%define SYS_WRITE  1        ; número da syscall write (Linux x86_64)
+%define SYS_EXIT   60       ; número da syscall exit  (Linux x86_64)
+%define STDOUT     1        ; descritor de arquivo para saída padrão (stdout)
 
 global _start
+
+; ---------------------------------------------------------------------------
+; Seção de dados
+; ---------------------------------------------------------------------------
 
 section .data
     ; Primeira mensagem
@@ -27,9 +37,11 @@ section .data
     msg2 db "Segunda linha exibida pelo programa", 10
     msg2_len equ $ - msg2
 
-    ; Valores inteiros calculados em tempo de montagem
-    %assign TOTAL_MSGS 2           ; literal, ok para o pré-processador
-    TOTAL_LEN equ msg1_len + msg2_len  ; depende de labels -> usa equ
+    ; Contador de mensagens definido em tempo de pré-processamento
+    %assign TOTAL_MSGS 2
+
+    ; Tamanho total das mensagens calculado em tempo de montagem
+    TOTAL_LEN equ msg1_len + msg2_len
 
     ; -----------------------------------------------------------------------
     ; Exemplo de %if: só define msg_multi se TOTAL_MSGS > 1
@@ -40,31 +52,41 @@ section .data
     %endif
 
     ; -----------------------------------------------------------------------
-    ; Exemplo de %ifdef: bloco so existente em modo DEBUG
-    ;    - Ativado com: nasm -DDEBUG ...
+    ; Exemplo de %ifdef: bloco só existente em modo DEBUG
+    ;   - Ativado com: nasm -DDEBUG ...
     ; -----------------------------------------------------------------------
     %ifdef DEBUG
         debug_msg db "DEBUG: execucao em modo de depuracao ativa.", 10
         debug_msg_len equ $ - debug_msg
     %endif
 
+; ---------------------------------------------------------------------------
+; Seção de código
+; ---------------------------------------------------------------------------
+
 section .text
 _start:
+    ; -----------------------------------------------------------------------
     ; write(STDOUT, msg1, msg1_len)
+    ; -----------------------------------------------------------------------
     mov     rax, SYS_WRITE
     mov     rdi, STDOUT
     mov     rsi, msg1
     mov     rdx, msg1_len
     syscall
 
+    ; -----------------------------------------------------------------------
     ; write(STDOUT, msg2, msg2_len)
+    ; -----------------------------------------------------------------------
     mov     rax, SYS_WRITE
     mov     rdi, STDOUT
     mov     rsi, msg2
     mov     rdx, msg2_len
     syscall
 
+    ; -----------------------------------------------------------------------
     ; Se TOTAL_MSGS > 1, msg_multi foi definida e o código abaixo existe
+    ; -----------------------------------------------------------------------
     %if TOTAL_MSGS > 1
         mov     rax, SYS_WRITE
         mov     rdi, STDOUT
@@ -73,10 +95,17 @@ _start:
         syscall
     %endif
 
-    ; Exemplo de uso de TOTAL_LEN: apenas carregado em um registrador
+    ; -----------------------------------------------------------------------
+    ; Exemplo de uso de TOTAL_LEN:
+    ;   - Aqui apenas carregamos o valor em RBX.
+    ;   - Em programas reais, isso poderia ser usado para dimensionar buffers,
+    ;     laços, etc.
+    ; -----------------------------------------------------------------------
     mov     rbx, TOTAL_LEN
 
+    ; -----------------------------------------------------------------------
     ; Bloco extra só em modo DEBUG
+    ; -----------------------------------------------------------------------
     %ifdef DEBUG
         mov     rax, SYS_WRITE
         mov     rdi, STDOUT
@@ -85,7 +114,9 @@ _start:
         syscall
     %endif
 
+    ; -----------------------------------------------------------------------
     ; exit(0)
+    ; -----------------------------------------------------------------------
     mov     rax, SYS_EXIT
     xor     rdi, rdi
     syscall
